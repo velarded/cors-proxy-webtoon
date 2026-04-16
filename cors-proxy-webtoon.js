@@ -1,22 +1,31 @@
-// This is an example of a simple proxy server using Express.js [citation:1][citation:9]
-const express = require('express');
-const cors = require('cors'); // Enable CORS for your Framer app
-const fetch = require('node-fetch');
+// api/proxy.js
+export default async function handler(req, res) {
+  // Enable CORS for your Framer domain
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-const app = express();
-app.use(cors());
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-app.get('/proxy', async (req, res) => {
-    const targetUrl = req.query.url;
-    if (!targetUrl) return res.status(400).send('URL is required');
+  // Get the target URL from query parameter
+  const targetUrl = req.query.url;
+  
+  if (!targetUrl) {
+    return res.status(400).json({ error: 'Missing url parameter' });
+  }
 
-    try {
-        const response = await fetch(targetUrl);
-        const data = await response.json();
-        res.json(data);
-    } catch (error) {
-        res.status(500).send('Proxy error');
-    }
-});
-
-app.listen(3000);
+  try {
+    // Fetch from the target API
+    const response = await fetch(targetUrl);
+    const data = await response.json();
+    
+    // Return the data with CORS headers
+    res.status(200).json(data);
+  } catch (error) {
+    console.error('Proxy error:', error);
+    res.status(500).json({ error: 'Failed to fetch data' });
+  }
+}
