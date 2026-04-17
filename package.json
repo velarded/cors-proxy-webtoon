@@ -1,0 +1,9 @@
+{
+  "name": "webtoon-scraper-api",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "API to scrape Webtoon views and subscribers",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12"
+  }
+}
