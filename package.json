@@ -6,5 +6,20 @@
   "dependencies": {
     "@vercel/edge-config": "^1.4.3",
     "cheerio": "^1.0.0-rc.12"
-  }
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/velarded/cors-proxy-webtoon.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/velarded/cors-proxy-webtoon/issues"
+  },
+  "homepage": "https://github.com/velarded/cors-proxy-webtoon#readme"
 }
