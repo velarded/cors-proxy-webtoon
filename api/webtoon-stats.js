@@ -1,4 +1,6 @@
-import * as cheerio from 'cheerio';
+// Simple cache object
+const cache = new Map();
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -19,7 +21,19 @@ export default async function handler(req, res) {
     });
   }
 
+  // Check cache first
+  const cached = cache.get(url);
+  if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+    console.log(`Cache hit for ${url}`);
+    return res.status(200).json({
+      ...cached.data,
+      cached: true,
+      cacheAge: Math.floor((Date.now() - cached.timestamp) / 1000) // seconds ago
+    });
+  }
+
   try {
+    // Fetch fresh data
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -27,42 +41,39 @@ export default async function handler(req, res) {
     });
     
     const html = await response.text();
-    const $ = cheerio.load(html);
     
+    // Extract views and subscribers (using your existing extraction logic)
     let views = null;
     let subscribers = null;
     
-    // Find the grade_area ul
-    const gradeArea = $('ul.grade_area');
-    
-    if (gradeArea.length > 0) {
-      // Look for the view count
-      const viewElement = gradeArea.find('li:has(.ico_view) .cnt');
-      if (viewElement.length > 0) {
-        views = parseInt(viewElement.text().replace(/,/g, ''));
-      }
-      
-      // Look for the subscriber count
-      const subscriberElement = gradeArea.find('li:has(.ico_subscribe) .cnt');
-      if (subscriberElement.length > 0) {
-        subscribers = parseInt(subscriberElement.text().replace(/,/g, ''));
-      }
+    const viewPattern = /<span class="ico_view">view<\/span>\s*<em class="cnt">([\d,]+)<\/em>/i;
+    const viewMatch = html.match(viewPattern);
+    if (viewMatch) {
+      views = parseInt(viewMatch[1].replace(/,/g, ''));
     }
     
-    if (views === null && subscribers === null) {
-      return res.status(404).json({
-        success: false,
-        error: 'Could not find grade_area with view/subscriber counts'
-      });
+    const subscriberPattern = /<span class="ico_subscribe">subscribe<\/span>\s*<em class="cnt">([\d,]+)<\/em>/i;
+    const subscriberMatch = html.match(subscriberPattern);
+    if (subscriberMatch) {
+      subscribers = parseInt(subscriberMatch[1].replace(/,/g, ''));
     }
     
-    return res.status(200).json({
+    const result = {
       success: true,
       url: url,
       views: views,
       subscribers: subscribers,
-      scrapedAt: new Date().toISOString()
+      scrapedAt: new Date().toISOString(),
+      cached: false
+    };
+    
+    // Store in cache
+    cache.set(url, {
+      data: result,
+      timestamp: Date.now()
     });
+    
+    return res.status(200).json(result);
     
   } catch (error) {
     console.error('Scraping error:', error);
@@ -72,3 +83,5 @@ export default async function handler(req, res) {
     });
   }
 }
+
+    // TODO: get from here https://www.webtoons.com/p/community/en/u/marmae

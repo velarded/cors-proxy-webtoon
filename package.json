@@ -4,6 +4,7 @@
   "type": "module",
   "description": "API to scrape Webtoon views and subscribers",
   "dependencies": {
+    "@vercel/edge-config": "^1.4.3",
     "cheerio": "^1.0.0-rc.12"
   }
 }
